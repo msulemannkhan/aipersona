@@ -5,7 +5,7 @@
 
 ## Video Demo
 
-https://drive.google.com/drive/u/0/folders/1Sbkf2nD0ckNv7ks_vvwf-eHV6E4wIUlE
+https://drive.google.com/file/d/1ZMklg0RTDbGvyEptlZ4GgkvNMG6UdPJ9/view?usp=sharing
 
 ---
 
