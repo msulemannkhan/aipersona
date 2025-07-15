@@ -10,8 +10,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      - "8081:80"
-      - "8090:8080"
+      - "17801:80"
+      - "17890:8080"
     command:
       - --providers.docker
       - --providers.docker.constraints=Label(`traefik.constraint-label`, `traefik-public`)
@@ -33,28 +33,28 @@ services:
 
   db:
     ports:
-      - "5444:5432"
+      - "17432:5432"
 
   adminer:
     ports:
-      - "8080:8080"
+      - "17080:8080"
 
   backend:
     ports:
-      - "8010:8000"
+      - "17010:8000"
     volumes:
       - ./backend:/app
     environment:
       - ENVIRONMENT=local
-      - FRONTEND_HOST=http://localhost:5173
-      - BACKEND_CORS_ORIGINS=["http://localhost:5173","http://localhost:3000","http://localhost:8080","http://localhost:8010","http://localhost","https://localhost","https://localhost:5173","https://localhost:3000","https://localhost:8080","https://counselor-ai.cc"]
+      - FRONTEND_HOST=http://localhost:19100
+      - BACKEND_CORS_ORIGINS=["http://localhost:19100","http://localhost:3000","http://localhost:17080","http://localhost:17010","http://localhost","https://localhost","https://localhost:19100","https://localhost:3000","https://localhost:17080","https://counselor-ai.cc"]
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
   mailcatcher:
     image: schickling/mailcatcher
     ports:
-      - "1080:1080"
-      - "1025:1025"
+      - "18080:1080"
+      - "18025:1025"
 
   frontend:
     build:
@@ -62,7 +62,7 @@ services:
       dockerfile: Dockerfile
       target: dev
     ports:
-      - "5173:5173"
+      - "19100:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -99,7 +99,7 @@ services:
       - ./frontend/blob-report:/app/blob-report
       - ./frontend/test-results:/app/test-results
     ports:
-      - 9323:9323
+      - 19323:9323
 
 networks:
   default:

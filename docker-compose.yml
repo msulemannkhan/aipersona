@@ -3,6 +3,8 @@ services:
   db:
     image: postgres:17
     restart: always
+    ports:
+      - "17432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -22,13 +24,15 @@ services:
   adminer:
     image: adminer
     restart: always
+    ports:
+      - "17080:8080"
     networks:
       - traefik-public
       - default
     depends_on:
       db:
         condition: service_healthy
-        restart: true
+        # restart: true
     environment:
       - ADMINER_DESIGN=pepa-linha-dark
       - ADMINER_DEFAULT_SERVER=db
@@ -55,7 +59,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-        restart: true
+        #  restart: true
     command: bash scripts/prestart.sh
     env_file:
       - .env
@@ -81,21 +85,23 @@ services:
   backend:
     image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
     restart: always
+    ports:
+      - "17010:8000"
     networks:
       - traefik-public
       - default
     depends_on:
       db:
         condition: service_healthy
-        restart: true
+        # restart: true
       prestart:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-        restart: true
+        # restart: true
       qdrant:
         condition: service_started
-        restart: true
+        # restart: true
     env_file:
       - .env
     environment:
@@ -149,13 +155,15 @@ services:
   frontend:
     image: '${DOCKER_IMAGE_FRONTEND?Variable not set}:${TAG-latest}'
     restart: always
+    ports:
+      - "19101:80"
     networks:
       - traefik-public
       - default
     build:
       context: ./frontend
       args:
-        - VITE_API_URL=http://${DOMAIN?Variable not set}:8010/api
+        - VITE_API_URL=http://${DOMAIN?Variable not set}:17010/api
         - NODE_ENV=production
     labels:
       - traefik.enable=true
@@ -187,8 +195,8 @@ services:
     volumes:
       - qdrant-data:/qdrant/storage
     ports:
-      - "6333:6333"
-      - "6334:6334"
+      - "17333:6333"
+      - "17334:6334"
     environment:
       - QDRANT__SERVICE__HTTP_PORT=6333
       - QDRANT__SERVICE__GRPC_PORT=6334
@@ -205,7 +213,7 @@ services:
     volumes:
       - redis-data:/data
     ports:
-      - "6379:6379"
+      - "17379:6379"
     command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -224,13 +232,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
-        restart: true
+        # restart: true
       redis:
         condition: service_healthy
-        restart: true
+        # restart: true
       qdrant:
         condition: service_started
-        restart: true
+        # restart: true
     command: bash -c "cd /app && export PYTHONPATH=/app && celery -A app.celery_app worker --loglevel=info --concurrency=2"
     env_file:
       - .env
@@ -259,10 +267,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
-        restart: true
+        # restart: true
       redis:
         condition: service_healthy
-        restart: true
+        # restart: true
     command: bash -c "cd /app && export PYTHONPATH=/app && celery -A app.celery_app beat --loglevel=info"
     env_file:
       - .env
@@ -289,12 +297,12 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-        restart: true
+        # restart: true
       celery-worker:
         condition: service_started
     command: bash -c "cd /app && export PYTHONPATH=/app && celery -A app.celery_app flower --port=5555"
     ports:
-      - "5555:5555"
+      - "17555:5555"
     env_file:
       - .env
     environment:

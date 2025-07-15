@@ -94,8 +94,17 @@ function Chat() {
             return mergedMessages
         },
         enabled: !!selectedSoulId,
-        refetchInterval: hasPendingReview ? false : 5000, // Don't refetch while pending review
+        refetchInterval: hasPendingReview ? 2000 : 5000, // 3s when pending, 8s when normal
         refetchIntervalInBackground: true, // Keep refreshing in background
+        retry: (failureCount, error) => {
+            // Don't retry on authentication errors to avoid spam
+            if ((error as any)?.status === 401 || (error as any)?.status === 403) return false
+            // Don't retry more than 3 times to avoid hammering the server
+            return failureCount < 3
+        },
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+        staleTime: 2000, // Consider data stale after 2 seconds
+        gcTime: 300000 // Keep in cache for 5 minutes
     })
 
     // Send message mutation with optimistic updates
@@ -222,7 +231,7 @@ function Chat() {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
         
         // Check if there are any temporary messages (indicating pending review)
-        if (messages) {
+        if (messages && Array.isArray(messages)) {
             const hasTemporaryMessage = messages.some(msg => msg.is_temporary)
             setHasPendingReview(hasTemporaryMessage)
             
@@ -243,8 +252,13 @@ function Chat() {
                     setHasPendingReview(false)
                 }
             }
+            
+            // Fallback cleanup: If we have no temporary messages, clear localStorage
+            if (!hasTemporaryMessage && selectedSoulId) {
+                clearTemporaryMessages(selectedSoulId)
+            }
         }
-    }, [messages])
+    }, [messages, selectedSoulId, queryClient])
 
     const handleSendMessage = async () => {
         if (!message.trim() || !selectedSoulId || sendMessageMutation.isPending) return

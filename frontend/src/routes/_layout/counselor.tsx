@@ -12,7 +12,7 @@ import {
   Spinner,
   Textarea,
 } from "@chakra-ui/react"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { useState } from "react"
 import {
@@ -39,7 +39,6 @@ import useCustomToast from "@/hooks/useCustomToast"
 export const Route = createFileRoute("/_layout/counselor")({
   component: CounselorDashboard,
 })
-
 function CounselorDashboard() {
   return (
     <RoleGuard permission="access_counselor_queue">
@@ -50,6 +49,7 @@ function CounselorDashboard() {
 
 function CounselorDashboardContent() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const queryClient = useQueryClient()
   const [selectedResponse, setSelectedResponse] = useState<any>(null)
   const [isModifyDialogOpen, setIsModifyDialogOpen] = useState(false)
   const [modifiedResponse, setModifiedResponse] = useState("")
@@ -62,7 +62,7 @@ function CounselorDashboardContent() {
   const { data: queueData, isLoading, error, refetch } = useQuery({
     queryKey: ["counselor-queue"],
     queryFn: () => CounselorService.getCounselorQueue({ limit: 50 }),
-    refetchInterval: 30000, // Refetch every 30 seconds for better responsiveness
+    refetchInterval: 3000, // Refetch every 3 seconds - balanced approach
     refetchIntervalInBackground: true, // Keep refetching in background
     retry: (failureCount, error: any) => {
       // Don't retry on 403 errors (permission issues)
@@ -70,6 +70,9 @@ function CounselorDashboardContent() {
       // Retry up to 3 times for other errors
       return failureCount < 3
     },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    staleTime: 5000, // Consider data stale after 5 seconds
+    gcTime: 300000 // Keep in cache for 5 minutes
   })
 
   // Fetch performance metrics
@@ -88,6 +91,8 @@ function CounselorDashboardContent() {
     onSuccess: () => {
       showSuccessToast("Response approved successfully")
       refetch()
+      // Invalidate chat message queries to force refresh for users
+      queryClient.invalidateQueries({ queryKey: ["chat-messages"] })
     },
     onError: () => {
       showErrorToast("Failed to approve response")
@@ -111,6 +116,8 @@ function CounselorDashboardContent() {
       setModifiedResponse("")
       setCounselorNotes("")
       refetch()
+      // Invalidate chat message queries to force refresh for users
+      queryClient.invalidateQueries({ queryKey: ["chat-messages"] })
     },
     onError: () => {
       showErrorToast("Failed to modify response")
@@ -134,6 +141,8 @@ function CounselorDashboardContent() {
       setReplacementResponse("")
       setRejectionReason("")
       refetch()
+      // Invalidate chat message queries to force refresh for users
+      queryClient.invalidateQueries({ queryKey: ["chat-messages"] })
     },
     onError: () => {
       showErrorToast("Failed to reject response")
