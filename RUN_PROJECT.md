@@ -3,6 +3,7 @@
 ## Prerequisites
 - Docker installed on your system
 - Git installed on your system
+- Ensure you have a `.env` file in the project root
 
 ## Quick Start (3 Steps)
 
@@ -14,6 +15,10 @@ cd ai-persona
 
 ### 2. Build and Start Services
 ```bash
+# Create required network
+docker network create spiritual-chatbot-traefik-public
+
+# Build and start all services
 docker-compose up --build
 ```
 
@@ -120,7 +125,16 @@ docker-compose logs -f backend
 
 # Reset database (removes all data)
 docker-compose down -v
+
+# Check prestart service logs (runs once and exits)
+docker logs aipersona-prestart-1
 ```
+
+## Important Notes
+
+- The **prestart service** runs database migrations and initial data setup, then exits normally (exit code 0)
+- If prestart shows exit code 1, check its logs for database connection or migration errors
+- All other services should remain running continuously
 
 ## Troubleshooting
 
@@ -128,6 +142,31 @@ docker-compose down -v
 2. **Database issues**: Run `docker-compose down -v` to reset volumes
 3. **Permission errors**: Run `chmod +x backend/scripts/*.py`
 4. **Build issues**: Run `docker-compose build --no-cache`
+5. **Docker naming conflicts**: If you see "image already exists" errors:
+   ```bash
+   docker-compose down --volumes --remove-orphans
+   docker system prune -f
+   docker network create spiritual-chatbot-traefik-public
+   docker-compose up --build
+   ```
+6. **Missing network**: If you get "network not found" errors:
+   ```bash
+   docker network create spiritual-chatbot-traefik-public
+   ```
+7. **Prestart service failure**: If you get "prestart didn't complete successfully" errors:
+   ```bash
+   # Check the prestart service logs
+   docker logs aipersona-prestart-1
+   
+   # If it shows database connection errors, wait for database to be ready
+   # If it shows migration errors, reset the database:
+   docker-compose down -v
+   docker-compose up --build
+   
+   # The prestart service should exit with code 0 (success) after running migrations
+   # Check the actual exit code:
+   docker ps -a --filter "name=prestart" --format "table {{.Names}}\t{{.Status}}"
+   ```
 
 ## Development Mode
 

@@ -131,9 +131,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
-
-    build:
-      context: ./backend
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
@@ -254,8 +251,6 @@ services:
       - QDRANT_URL=http://qdrant:6333
     volumes:
       - app-uploads:/app/uploads
-    build:
-      context: ./backend
 
   # Celery Beat for scheduled tasks
   celery-beat:
@@ -284,8 +279,6 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - REDIS_URL=redis://redis:6379/0
       - QDRANT_URL=http://qdrant:6333
-    build:
-      context: ./backend
 
   # Flower for Celery monitoring (optional)
   flower:
@@ -307,8 +300,6 @@ services:
       - .env
     environment:
       - REDIS_URL=redis://redis:6379/0
-    build:
-      context: ./backend
 
 volumes:
   app-db-data:
