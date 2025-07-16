@@ -67,8 +67,8 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=https://counselor-ai.cc
-      - NODE_ENV=production
+      - VITE_API_URL=http://localhost:17010
+      - NODE_ENV=development
     command: npm run dev -- --host 0.0.0.0
     labels:
       - traefik.enable=true

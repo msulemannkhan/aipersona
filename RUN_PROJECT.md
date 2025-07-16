@@ -15,12 +15,18 @@ cd ai-persona
 
 ### 2. Build and Start Services
 ```bash
-# Create required network
+# Create required network (ignore if already exists)
 docker network create spiritual-chatbot-traefik-public
 
-# Build and start all services
-docker-compose up --build
+# Build the images explicitly first (fixes pull access issues)
+# The prestart service builds the backend image, frontend builds the frontend image
+docker-compose build prestart frontend
+
+# Start all services
+docker-compose up -d
 ```
+
+> **Note**: We build images explicitly first because the docker-compose.yml file references `backend:latest` and `frontend:latest` images that don't exist in public registries. These need to be built locally before the services can start.
 
 ### 3. Create Test Users and AI Souls
 ```bash
@@ -136,24 +142,71 @@ docker logs aipersona-prestart-1
 - If prestart shows exit code 1, check its logs for database connection or migration errors
 - All other services should remain running continuously
 
+## Verification
+
+After starting the services, verify everything is working:
+
+```bash
+# Check container status
+docker ps
+
+# Test backend API
+curl http://localhost:17010/api/utils/health-check/
+
+# Test frontend
+curl http://localhost:19100
+
+# Check service logs
+docker logs aipersona-backend-1 --tail=10
+docker logs aipersona-frontend-1 --tail=10
+```
+
 ## Troubleshooting
 
-1. **Port conflicts**: All ports use 17000-19000 range to avoid conflicts
-2. **Database issues**: Run `docker-compose down -v` to reset volumes
-3. **Permission errors**: Run `chmod +x backend/scripts/*.py`
-4. **Build issues**: Run `docker-compose build --no-cache`
-5. **Docker naming conflicts**: If you see "image already exists" errors:
+1. **Pull access denied errors**: If you see "pull access denied for backend" errors:
+   ```bash
+   # Stop any running containers
+   docker-compose down
+   
+   # Build images explicitly first
+   docker-compose build prestart frontend
+   
+   # Then start services
+   docker-compose up -d
+   ```
+
+2. **Port conflicts**: All ports use 17000-19000 range to avoid conflicts
+
+3. **Database issues**: Run `docker-compose down -v` to reset volumes
+
+4. **Permission errors**: Run `chmod +x backend/scripts/*.py`
+
+5. **Build issues**: Run `docker-compose build --no-cache`
+
+6. **Docker naming conflicts**: If you see "image already exists" errors:
    ```bash
    docker-compose down --volumes --remove-orphans
    docker system prune -f
    docker network create spiritual-chatbot-traefik-public
-   docker-compose up --build
+   docker-compose build prestart frontend
+   docker-compose up -d
    ```
-6. **Missing network**: If you get "network not found" errors:
+
+7. **Missing network**: If you get "network not found" errors:
    ```bash
    docker network create spiritual-chatbot-traefik-public
    ```
-7. **Prestart service failure**: If you get "prestart didn't complete successfully" errors:
+
+8. **Frontend JSX errors**: If you see "_jsxDEV is not a function" errors in the browser console:
+   ```bash
+   # This happens when NODE_ENV is set to production but running in dev mode
+   # The fix is already applied in docker-compose.override.yml
+   # If you still see this error, restart the frontend:
+   docker-compose down frontend
+   docker-compose up -d frontend
+   ```
+
+9. **Prestart service failure**: If you get "prestart didn't complete successfully" errors:
    ```bash
    # Check the prestart service logs
    docker logs aipersona-prestart-1
@@ -161,7 +214,8 @@ docker logs aipersona-prestart-1
    # If it shows database connection errors, wait for database to be ready
    # If it shows migration errors, reset the database:
    docker-compose down -v
-   docker-compose up --build
+   docker-compose build prestart frontend
+   docker-compose up -d
    
    # The prestart service should exit with code 0 (success) after running migrations
    # Check the actual exit code:
