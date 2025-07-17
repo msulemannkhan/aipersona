@@ -1,85 +1,107 @@
-# Instructions to Run AI Persona Project
+# AI Persona Project - Setup Guide
 
-## Quick Start (Recommended)
+This guide provides instructions to get the AI Persona Project up and running on your local machine.
 
-### Using the Automated Startup Script
+---
 
-For the easiest setup experience, use the automated startup script that handles all the setup steps:
+## **Prerequisites**
+- Docker Desktop installed and running
+- Git installed
 
-**For Mac/Linux:**
+---
+
+## **Quick Start (Recommended)**
+
+For the most straightforward setup, we recommend using the automated script. It will detect your operating system, check for necessary software like Docker, and run all the required commands in the correct sequence.
+
+**Step 1: Clone and Setup Environment**
 ```bash
 git clone <repository-url>
 cd ai-persona
+cp sample.env .env
+```
+
+**Step 2: Add API Keys**
+Edit the `.env` file and add your API keys:
+- `OPENAI_API_KEY=your_openai_api_key_here`
+- `COHERE_API_KEY=your_cohere_api_key_here`
+
+**Step 3: Run Startup Script**
+
+**For macOS/Linux:**
+```bash
 ./startup/startup.sh
 ```
 
 **For Windows:**
-```cmd
-git clone <repository-url>
-cd ai-persona
+```bash
 startup\startup.bat
 ```
 
-The script will:
-- Detect your operating system
-- Check Docker installation and status
-- Guide you through the setup process
-- Run all commands in the correct order with proper logging
-- Handle errors gracefully with helpful messages
-- Wait for services to be ready before proceeding
+Once the script is complete, you can access the application.
 
-After the script completes, access the application at http://localhost:19100.
+* **URL:** `http://localhost:19100`
+* **Email:** `admin@example.com`
+* **Password:** `TestPass123!`
 
-**Default login credentials:**
-- Email: admin@example.com
-- Password: changethis
+---
 
-## Manual Setup (Alternative)
+## **Manual Setup (Alternative)**
 
-If you prefer to run the commands manually or encounter issues with the automated script:
+If you prefer to run the commands yourself or encounter issues with the automated script, follow these steps.
 
-### 1. Clone and Navigate
-
-Clone the repository and navigate to the project directory:
-
+**Step 1: Clone the Repository**
 ```bash
 git clone <repository-url>
 cd ai-persona
 ```
 
-### 2. Build and Start Services
+**Step 2: Create Environment File**
+Create a `.env` file by copying the sample:
+```bash
+cp sample.env .env
+```
 
-Build the necessary images and start the services:
+Then edit the `.env` file and add your API keys:
+- `OPENAI_API_KEY=your_openai_api_key_here`
+- `COHERE_API_KEY=your_cohere_api_key_here`
 
+**Step 3: Start the Services**
 ```bash
 docker network create spiritual-chatbot-traefik-public
 docker-compose build prestart frontend
 docker-compose up -d
 ```
 
-### 3. Create Test Users and AI Souls
+**That's it!** The system now automatically creates test users and AI souls during startup.
 
-Create test users and AI souls using the following commands:
+---
 
-```bash
-docker exec -it ai-persona-backend-1 python /app/scripts/docker_reset_users.py
-docker exec -it ai-persona-backend-1 python /app/scripts/add_test_ai_souls.py admin@example.com
-```
+## **Access Your Application**
 
-After completing these steps, access the application at http://localhost:19100.
+Once setup is complete, you can access:
 
-## Troubleshooting
+* **Frontend:** `http://localhost:19100`
+* **Backend API:** `http://localhost:17010`
+* **API Documentation:** `http://localhost:17010/docs`
+* **Database Admin:** `http://localhost:17080`
 
-If you encounter issues:
+**Default Login:**
+* **Email:** `admin@example.com`
+* **Password:** `TestPass123!`
 
-1. **Docker not running**: Make sure Docker Desktop is running
-2. **Permission denied**: On Linux/Mac, ensure the script is executable: `chmod +x startup/startup.sh`
-3. **Network already exists**: The script will skip network creation if it already exists
-4. **Container not ready**: The script waits for the backend container to be ready before proceeding
-5. **Windows issues**: Try running the batch script as Administrator
+---
 
-## Additional Commands
+## **Troubleshooting & Other Commands**
 
-- **View logs**: `docker-compose logs -f`
-- **Stop services**: `docker-compose down`
-- **Restart services**: `docker-compose restart`
+**Common Issues:**
+* **Docker Not Running:** Ensure Docker Desktop is active on your system before starting.
+* **Permission Denied (macOS/Linux):** If you see a permission error, make the startup script executable with the command: `chmod +x startup/startup.sh`.
+* **Windows Issues:** If you encounter problems on Windows, try running the `startup.bat` script as an Administrator.
+* **Missing API Keys:** Make sure you've added your OPENAI_API_KEY and COHERE_API_KEY to the .env file.
+
+**Useful Commands:**
+* **View Application Logs:** `docker-compose logs -f`
+* **Stop All Services:** `docker-compose down`
+* **Restart All Services:** `docker-compose restart`
+* **Reset Everything:** `docker-compose down -v` (removes all data)
