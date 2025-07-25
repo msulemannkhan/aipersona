@@ -50,24 +50,26 @@ test("User can reset password successfully using the link", async ({
     timeout: 5000,
   })
 
-  await page.goto(
-    `${process.env.MAILCATCHER_HOST}/messages/${emailData.id}.html`,
-  )
+  const mailcatcherUrl = `${process.env.MAILCATCHER_HOST}/messages/${emailData.id}.html`
 
-  const selector = 'a[href*="/reset-password?token="]'
-
-  let url = await page.getAttribute(selector, "href")
-
-  // TODO: update var instead of doing a replace
-  url = url!.replace("http://localhost/", "http://localhost:5173/")
-
-  // Set the new password and confirm it
-  await page.goto(url)
+  // Find reset password email and click the link
+  await page.goto(mailcatcherUrl);
+  await page.waitForSelector("tr");
+  await page.click("tr");
+  await page.waitForSelector("iframe");
+  const iframeContent = await page.frameLocator("iframe").locator("body");
+  const link = await iframeContent.locator("a").getAttribute("href");
+  if (link) {
+    let url = link;
+    // Replace the href from backend with the frontend URL
+    url = url!.replace("http://localhost/", "http://localhost:19100/")
+    await page.goto(url);
+  }
 
   await page.getByPlaceholder("New Password").fill(newPassword)
   await page.getByPlaceholder("Confirm Password").fill(newPassword)
   await page.getByRole("button", { name: "Reset Password" }).click()
-  await expect(page.getByText("Password updated successfully")).toBeVisible()
+  await expect(page.locator("text=Your password has been successfully reset.")).toBeVisible();
 
   // Check if the user is able to login with the new password
   await logInUser(page, email, newPassword)
@@ -105,16 +107,22 @@ test("Weak new password validation", async ({ page, request }) => {
     timeout: 5000,
   })
 
-  await page.goto(
-    `${process.env.MAILCATCHER_HOST}/messages/${emailData.id}.html`,
-  )
+  const mailcatcherUrl = `${process.env.MAILCATCHER_HOST}/messages/${emailData.id}.html`
 
-  const selector = 'a[href*="/reset-password?token="]'
-  let url = await page.getAttribute(selector, "href")
-  url = url!.replace("http://localhost/", "http://localhost:5173/")
+  // Find reset password email and click the link
+  await page.goto(mailcatcherUrl);
+  await page.waitForSelector("tr");
+  await page.click("tr");
+  await page.waitForSelector("iframe");
+  const iframeContent2 = await page.frameLocator("iframe").locator("body");
+  const link2 = await iframeContent2.locator("a").getAttribute("href");
+  if (link2) {
+    let url = link2;
+    // Replace the href from backend with the frontend URL
+    url = url!.replace("http://localhost/", "http://localhost:19100/")
+    await page.goto(url);
+  }
 
-  // Set a weak new password
-  await page.goto(url)
   await page.getByPlaceholder("New Password").fill(weakPassword)
   await page.getByPlaceholder("Confirm Password").fill(weakPassword)
   await page.getByRole("button", { name: "Reset Password" }).click()

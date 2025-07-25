@@ -32,15 +32,22 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    { name: 'setup', testMatch: /.*\.setup\.ts/ },
+    {
+      name: "setup",
+      testMatch: /.*\.setup\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: 'http://localhost:19100',
+      },
+    },
 
     {
-      name: 'chromium',
+      name: "chromium",
       use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/user.json',
+        ...devices["Desktop Chrome"],
+        baseURL: 'http://localhost:19100',
       },
-      dependencies: ['setup'],
+      dependencies: ["setup"],
     },
 
     // {
@@ -84,8 +91,8 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
+    command: "npm run dev",
+    url: 'http://localhost:19100',
     reuseExistingServer: !process.env.CI,
   },
 });
