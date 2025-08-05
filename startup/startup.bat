@@ -194,7 +194,11 @@ call :print_status "Windows detected. Make sure Docker Desktop is running."
 call :print_warning "If you encounter issues, try running this from Command Prompt as Administrator."
 echo.
 
+<<<<<<< HEAD
 set /p continue="Do you want to continue with the setup? (y/n): "
+=======
+set /p continue="Do you want to continue with the setup? (y/N): "
+>>>>>>> 99c15322f0f790a0e9e80a6f91a5addbcdbc1510
 if /i not "%continue%"=="y" (
     call :print_status "Setup cancelled by user"
     exit /b 0
